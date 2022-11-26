@@ -4,8 +4,8 @@ import time
 import random
 from button import Button
 
-difficulty = 228  # дефолтная сложность
-start_difficulty = 0
+
+difficulty = 228  #дефолтная сложность
 # Размер окна
 frame_size_x = 720
 frame_size_y = 480
@@ -29,7 +29,6 @@ red = pygame.Color(255, 0, 0)
 green = pygame.Color(0, 255, 0)
 blue = pygame.Color(0, 0, 255)
 light_blue = pygame.Color(0, 255, 255)
-
 # ФПС контроллер
 fps_controller = pygame.time.Clock()
 
@@ -37,11 +36,9 @@ fps_controller = pygame.time.Clock()
 snake_pos = [100, 50]
 snake_body = [[100, 50], [100 - 10, 50], [100 - (2 * 10), 50]]
 snake_color = green
-
 # Спавн еды
 food_pos = [random.randrange(1, (frame_size_x // 10)) * 10, random.randrange(1, (frame_size_y // 10)) * 10]
 food_spawn = True
-
 # Спавн бонуса (у нас замедляющий бонус будет)
 bonus_spawn = False
 bonus_pos = [random.randrange(1, (frame_size_x // 10)) * 10, random.randrange(1, (frame_size_y // 10)) * 10]
@@ -50,7 +47,6 @@ direction = 'RIGHT'
 change_to = direction
 
 score = 0
-
 
 
 # Game Over
@@ -66,7 +62,6 @@ def game_over():
     time.sleep(3)
     pygame.quit()
     sys.exit()
-
 
 # Отображение счета
 def show_score(choice, color, font, size):
@@ -97,6 +92,7 @@ def show_score(choice, color, font, size):
         best_score_rect.midtop = (frame_size_x / 2, frame_size_y / 1.15)
         game_window.blit(best_score_surface, best_score_rect)
     game_window.blit(score_surface, score_rect)
+
 
 
 # Меню
@@ -154,6 +150,7 @@ while True:
 
 # Выбор цвета:
 
+
 Button(235, 80, 250, 75, objects, 'Green', set_color(green))
 Button(235, 155, 250, 75, objects, 'Red', set_color(red))
 Button(235, 230, 250, 75, objects, 'Blue', set_color(blue))
@@ -178,7 +175,6 @@ while True:
         break
     pygame.display.flip()
 objects.clear()
-
 # Game:
 while True:
     for event in pygame.event.get():
@@ -232,13 +228,15 @@ while True:
     # Новое яблоко
     if not food_spawn:
         food_pos = [random.randrange(1, (frame_size_x // 10)) * 10, random.randrange(1, (frame_size_y // 10)) * 10]
-        food_spawn = True
+    food_spawn = True
+
     # Новый бонус
     if not bonus_spawn:
-        if random.randrange(0, 1100, 1) == 11:
+        if random.randrange(0, 1000, 1) == 11:
             bonus_pos = [random.randrange(1, (frame_size_x // 10)) * 10,
                          random.randrange(1, (frame_size_y // 10)) * 10]
             bonus_spawn = True
+
 
     # Отрисовка
     game_window.fill(black)
@@ -247,7 +245,7 @@ while True:
 
     # Еда
     pygame.draw.rect(game_window, white, pygame.Rect(food_pos[0], food_pos[1], 10, 10))
-    # Бонус
+    # Бонус:
     if bonus_spawn:
         pygame.draw.rect(game_window, light_blue, pygame.Rect(bonus_pos[0], bonus_pos[1], 10, 10))
     # Проигрыш:
@@ -265,4 +263,3 @@ while True:
     # Обновляем экран
     pygame.display.update()
     fps_controller.tick(difficulty)
-
