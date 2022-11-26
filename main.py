@@ -2,6 +2,7 @@ import pygame
 import sys
 import time
 import random
+from button import Button
 
 difficulty = 228  # дефолтная сложность
 start_difficulty = 0
@@ -27,6 +28,7 @@ white = pygame.Color(255, 255, 255)
 red = pygame.Color(255, 0, 0)
 green = pygame.Color(0, 255, 0)
 blue = pygame.Color(0, 0, 255)
+light_blue = pygame.Color(0, 255, 255)
 
 # ФПС контроллер
 fps_controller = pygame.time.Clock()
@@ -35,13 +37,20 @@ fps_controller = pygame.time.Clock()
 snake_pos = [100, 50]
 snake_body = [[100, 50], [100 - 10, 50], [100 - (2 * 10), 50]]
 snake_color = green
+
+# Спавн еды
 food_pos = [random.randrange(1, (frame_size_x // 10)) * 10, random.randrange(1, (frame_size_y // 10)) * 10]
 food_spawn = True
+
+# Спавн бонуса (у нас замедляющий бонус будет)
+bonus_spawn = False
+bonus_pos = [random.randrange(1, (frame_size_x // 10)) * 10, random.randrange(1, (frame_size_y // 10)) * 10]
 
 direction = 'RIGHT'
 change_to = direction
 
 score = 0
+
 
 
 # Game Over
@@ -57,6 +66,7 @@ def game_over():
     time.sleep(3)
     pygame.quit()
     sys.exit()
+
 
 # Отображение счета
 def show_score(choice, color, font, size):
@@ -89,55 +99,9 @@ def show_score(choice, color, font, size):
     game_window.blit(score_surface, score_rect)
 
 
-
 # Меню
 objects = []
 font = pygame.font.SysFont('Verdana', 20)
-
-
-# Кнопка для менюшки, чтобы выбирать сложность (да и много чего делать)
-class Button():
-    def __init__(self, x, y, width, height, buttonText='Button', onclickFunction=None, onePress=False):
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-        self.onclickFunction = onclickFunction
-        self.onePress = onePress
-        self.alreadyPressed = False
-
-        self.fillColors = {
-            'normal': white,
-            'nearly_pressed': (119, 136, 153),
-            'pressed': black,
-        }
-        self.buttonSurface = pygame.Surface((self.width, self.height))
-        self.buttonRect = pygame.Rect(self.x, self.y, self.width, self.height)
-
-        self.buttonSurf = font.render(buttonText, True, (20, 20, 20))
-        objects.append(self)
-
-    def process(self):
-        mousePos = pygame.mouse.get_pos()
-        self.buttonSurface.fill(self.fillColors['normal'])
-        if self.buttonRect.collidepoint(mousePos):
-            self.buttonSurface.fill(self.fillColors['nearly_pressed'])
-            if pygame.mouse.get_pressed(num_buttons=3)[0]:
-                self.buttonSurface.fill(self.fillColors['pressed'])
-                if self.onePress:
-                    self.onclickFunction()
-                elif not self.alreadyPressed:
-                    self.onclickFunction()
-                    self.alreadyPressed = True
-            else:
-                self.alreadyPressed = False
-        self.buttonSurface.blit(self.buttonSurf, [
-            self.buttonRect.width / 2 - self.buttonSurf.get_rect().width / 2,
-            self.buttonRect.height / 2 - self.buttonSurf.get_rect().height / 2
-        ])
-        game_window.blit(self.buttonSurface, self.buttonRect)
-
-
 is_pressed = False
 
 
@@ -163,11 +127,11 @@ def set_color(color):
     return setter
 
 
-Button(235, 80, 250, 75, 'Easy', set_difficulty(10))
-Button(235, 155, 250, 75, 'Medium', set_difficulty(25))
-Button(235, 230, 250, 75, 'Hard', set_difficulty(40))
-Button(235, 305, 250, 75, 'Harder', set_difficulty(60))
-Button(235, 380, 250, 75, 'ФПМИ ПМФ moment', set_difficulty(120))
+Button(235, 80, 250, 75, objects, 'Easy', set_difficulty(10))
+Button(235, 155, 250, 75, objects, 'Medium', set_difficulty(25))
+Button(235, 230, 250, 75, objects, 'Hard', set_difficulty(40))
+Button(235, 305, 250, 75, objects, 'Harder', set_difficulty(60))
+Button(235, 380, 250, 75, objects, 'ФПМИ ПМФ moment', set_difficulty(120))
 
 while True:
     fps_controller.tick(30)
@@ -181,7 +145,7 @@ while True:
             pygame.quit()
             sys.exit()
     for object in objects:
-        object.process()
+        object.process(game_window)
     if (is_pressed):
         time.sleep(0.5)
         objects.clear()
@@ -190,11 +154,10 @@ while True:
 
 # Выбор цвета:
 
-
-Button(235, 80, 250, 75, 'Green', set_color(green))
-Button(235, 155, 250, 75, 'Red', set_color(red))
-Button(235, 230, 250, 75, 'Blue', set_color(blue))
-Button(235, 305, 250, 75, 'White', set_color(white))
+Button(235, 80, 250, 75, objects, 'Green', set_color(green))
+Button(235, 155, 250, 75, objects, 'Red', set_color(red))
+Button(235, 230, 250, 75, objects, 'Blue', set_color(blue))
+Button(235, 305, 250, 75, objects, 'White', set_color(white))
 
 is_pressed = False
 
@@ -210,10 +173,11 @@ while True:
             pygame.quit()
             sys.exit()
     for object in objects:
-        object.process()
+        object.process(game_window)
     if (is_pressed):
         break
     pygame.display.flip()
+objects.clear()
 
 # Game:
 while True:
@@ -258,13 +222,23 @@ while True:
         score += 1
         difficulty += 0.5  # Делать ускорение со временем = криндж, делаем по еде
         food_spawn = False
+    elif bonus_spawn and (snake_pos[0] == bonus_pos[0] and snake_pos[1] == bonus_pos[1]):
+        score += 1
+        difficulty /= 1.25
+        bonus_spawn = False
     else:
         snake_body.pop()
 
     # Новое яблоко
     if not food_spawn:
         food_pos = [random.randrange(1, (frame_size_x // 10)) * 10, random.randrange(1, (frame_size_y // 10)) * 10]
-    food_spawn = True
+        food_spawn = True
+    # Новый бонус
+    if not bonus_spawn:
+        if random.randrange(0, 1100, 1) == 11:
+            bonus_pos = [random.randrange(1, (frame_size_x // 10)) * 10,
+                         random.randrange(1, (frame_size_y // 10)) * 10]
+            bonus_spawn = True
 
     # Отрисовка
     game_window.fill(black)
@@ -273,7 +247,9 @@ while True:
 
     # Еда
     pygame.draw.rect(game_window, white, pygame.Rect(food_pos[0], food_pos[1], 10, 10))
-
+    # Бонус
+    if bonus_spawn:
+        pygame.draw.rect(game_window, light_blue, pygame.Rect(bonus_pos[0], bonus_pos[1], 10, 10))
     # Проигрыш:
     # Выход за границу (ударились о край)
     if snake_pos[0] < 0 or snake_pos[0] > frame_size_x - 10:
@@ -289,3 +265,4 @@ while True:
     # Обновляем экран
     pygame.display.update()
     fps_controller.tick(difficulty)
+
